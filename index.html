@@ -9,31 +9,35 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     :root {
-      --bg-light: #f0f4f8;
-      --bg-dark: #2c3e50;
-      --text-light: #333;
-      --text-dark: #ecf0f1;
-      --card-bg-light: #ffffff;
-      --card-bg-dark: #34495e;
+      --bg-light: #ffffff;
+      --bg-dark: #2c2c2c;
+      --text-light: #e1e1e1;
+      --text-dark: #333;
+      --card-bg-light: #f5f5f5;
+      --card-bg-dark: #333;
+      --button-bg: #444;
+      --button-hover: #666;
+      --primary-color: #ffffff;
+      --secondary-color: #000000;
     }
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Arial', sans-serif;
       background: var(--bg-light);
       margin: 0;
       padding: 40px;
-      color: var(--text-light);
+      color: var(--text-dark);
       transition: background 0.3s, color 0.3s;
     }
     body.dark {
       background: var(--bg-dark);
-      color: var(--text-dark);
+      color: var(--text-light);
     }
     .container {
       max-width: 900px;
       margin: auto;
       background: var(--card-bg-light);
       padding: 40px;
-      border-radius: 12px;
+      border-radius: 10px;
       box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
       transition: background 0.3s;
     }
@@ -42,8 +46,9 @@
     }
     h1 {
       text-align: center;
-      margin-bottom: 30px;
+      margin-bottom: 20px;
       color: inherit;
+      font-size: 2rem;
     }
     input, button, select {
       padding: 12px;
@@ -53,27 +58,36 @@
       border-radius: 8px;
       font-size: 16px;
       box-sizing: border-box;
+      background-color: var(--bg-light);
+      color: var(--text-dark);
+    }
+    body.dark input, body.dark button {
+      background-color: #444;
+      color: var(--text-light);
+      border: 1px solid #666;
     }
     button {
-      background-color: #3498db;
-      color: white;
+      background-color: var(--button-bg);
+      color: var(--primary-color);
       font-weight: bold;
       transition: background 0.3s ease;
       cursor: pointer;
     }
     button:hover {
-      background-color: #2980b9;
+      background-color: var(--button-hover);
     }
     .summary {
-      background-color: #ecf0f1;
+      background-color: var(--card-bg-light);
       padding: 20px;
       border-radius: 8px;
       margin-top: 20px;
       font-size: 18px;
       line-height: 1.6;
+      color: var(--text-dark);
     }
-    .dark .summary {
-      background-color: #2c3e50;
+    body.dark .summary {
+      background-color: var(--card-bg-dark);
+      color: var(--text-light);
     }
     table {
       width: 100%;
@@ -81,17 +95,17 @@
       margin-top: 30px;
     }
     th, td {
-      border: 1px solid #bdc3c7;
+      border: 1px solid #ccc;
       padding: 12px;
       text-align: center;
       font-size: 14px;
     }
     th {
-      background-color: #2980b9;
-      color: white;
+      background-color: #444;
+      color: #fff;
     }
     tr:nth-child(even) {
-      background-color: #f9f9f9;
+      background-color: #f5f5f5;
     }
     .download-btn {
       margin-top: 20px;
@@ -111,6 +125,12 @@
     .toggle-theme {
       float: right;
       margin-bottom: 10px;
+      cursor: pointer;
+      background-color: #333;
+      color: #fff;
+      padding: 5px 15px;
+      border-radius: 20px;
+      border: none;
     }
     label {
       font-weight: bold;
