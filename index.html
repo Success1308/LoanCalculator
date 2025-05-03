@@ -6,28 +6,46 @@
   <title>Loan Calculator</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
+    :root {
+      --bg-light: #f0f4f8;
+      --bg-dark: #2c3e50;
+      --text-light: #333;
+      --text-dark: #ecf0f1;
+      --card-bg-light: #ffffff;
+      --card-bg-dark: #34495e;
+    }
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(120deg, #f0f4f8, #d9e2ec);
+      background: var(--bg-light);
       margin: 0;
       padding: 40px;
-      color: #333;
+      color: var(--text-light);
+      transition: background 0.3s, color 0.3s;
+    }
+    body.dark {
+      background: var(--bg-dark);
+      color: var(--text-dark);
     }
     .container {
       max-width: 900px;
       margin: auto;
-      background: white;
+      background: var(--card-bg-light);
       padding: 40px;
       border-radius: 12px;
       box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+      transition: background 0.3s;
+    }
+    body.dark .container {
+      background: var(--card-bg-dark);
     }
     h1 {
       text-align: center;
       margin-bottom: 30px;
-      color: #2c3e50;
+      color: inherit;
     }
-    input, button {
+    input, button, select {
       padding: 12px;
       margin: 10px 0;
       width: 100%;
@@ -53,6 +71,9 @@
       margin-top: 20px;
       font-size: 18px;
       line-height: 1.6;
+    }
+    .dark .summary {
+      background-color: #2c3e50;
     }
     table {
       width: 100%;
@@ -84,27 +105,49 @@
       font-size: 14px;
       margin-top: -8px;
     }
+    #chartContainer {
+      margin-top: 40px;
+    }
+    .toggle-theme {
+      float: right;
+      margin-bottom: 10px;
+    }
+    label {
+      font-weight: bold;
+      display: block;
+      margin-top: 15px;
+    }
   </style>
 </head>
 <body>
   <div class="container">
+    <button class="toggle-theme" onclick="toggleTheme()">Toggle Dark Mode</button>
     <h1>Loan Calculator</h1>
     <div>
-      <input type="number" id="loanAmount" placeholder="Loan Amount" />
+      <label for="loanAmount">Loan Amount</label>
+      <input type="number" id="loanAmount" placeholder="Loan Amount" min="0" />
       <div id="loanAmountError" class="error"></div>
-      <input type="number" id="tenure" placeholder="Tenure (months)" />
+
+      <label for="tenure">Tenure (months)</label>
+      <input type="number" id="tenure" placeholder="Tenure (months)" min="1" />
       <div id="tenureError" class="error"></div>
-      <input type="number" id="interestRate" placeholder="Interest Rate (Annual %)" step="0.01" />
+
+      <label for="interestRate">Interest Rate (Annual %)</label>
+      <input type="number" id="interestRate" placeholder="Interest Rate (Annual %)" step="0.01" min="0.01" />
       <div id="interestRateError" class="error"></div>
+
+      <label for="startDate">Loan Start Date (auto-calculate schedule till end)</label>
       <input type="date" id="startDate" placeholder="Start Date" />
       <div id="startDateError" class="error"></div>
-      <input type="number" id="prepayment" placeholder="Prepayment Amount (optional)" />
+
+      <label for="prepayment">Prepayment Amount (optional)</label>
+      <input type="number" id="prepayment" placeholder="Prepayment Amount (optional)" min="0" />
+
       <button onclick="calculateLoan()">Calculate</button>
       <button class="download-btn" onclick="downloadPDF()">Download PDF</button>
     </div>
-
     <div class="summary" id="summary"></div>
-
+    <canvas id="chart" width="800" height="400"></canvas>
     <table id="schedule">
       <thead>
         <tr>
@@ -121,6 +164,10 @@
   </div>
 
   <script>
+    function toggleTheme() {
+      document.body.classList.toggle('dark');
+    }
+
     function clearErrors() {
       ['loanAmountError', 'tenureError', 'interestRateError', 'startDateError'].forEach(id => {
         document.getElementById(id).innerText = '';
@@ -129,13 +176,11 @@
 
     function calculateLoan() {
       clearErrors();
-
       const loanAmount = parseFloat(document.getElementById('loanAmount').value);
       const tenure = parseInt(document.getElementById('tenure').value);
       const annualRate = parseFloat(document.getElementById('interestRate').value);
       const startDateValue = document.getElementById('startDate').value;
       const prepayment = parseFloat(document.getElementById('prepayment').value) || 0;
-
       let hasError = false;
 
       if (!loanAmount || loanAmount <= 0) {
@@ -166,22 +211,27 @@
       const tbody = document.querySelector('#schedule tbody');
       tbody.innerHTML = '';
 
+      const chartLabels = [];
+      const principalData = [];
+      const interestData = [];
+
       for (let i = 1; i <= tenure; i++) {
         const interest = balance * monthlyRate;
         const principal = Math.min(emi - interest, balance);
         totalInterest += interest;
-
         let prepayAmount = 0;
         if (i === 1 && prepayment > 0) {
           prepayAmount = Math.min(prepayment, balance - principal);
           balance -= prepayAmount;
         }
-
         balance -= principal;
 
         const emiDate = new Date(startDate);
         emiDate.setMonth(startDate.getMonth() + i - 1);
-        const formattedDate = emiDate.toISOString().split('T')[0];
+        const yyyy = emiDate.getFullYear();
+        const mm = String(emiDate.getMonth() + 1).padStart(2, '0');
+        const dd = String(emiDate.getDate()).padStart(2, '0');
+        const formattedDate = `${yyyy}-${mm}-${dd}`;
 
         const row = `<tr>
           <td>${i}</td>
@@ -194,6 +244,10 @@
 
         tbody.innerHTML += row;
 
+        chartLabels.push(`EMI ${i}`);
+        principalData.push(principal.toFixed(2));
+        interestData.push(interest.toFixed(2));
+
         if (balance <= 0.01) break;
       }
 
@@ -202,6 +256,39 @@
         Total Interest: <strong>${totalInterest.toFixed(2)}</strong><br>
         Total Repayment: <strong>${(emi * tenure + prepayment).toFixed(2)}</strong>
       `;
+
+      const ctx = document.getElementById('chart').getContext('2d');
+      if (window.chartInstance) window.chartInstance.destroy();
+      window.chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: chartLabels,
+          datasets: [
+            {
+              label: 'Principal',
+              data: principalData,
+              backgroundColor: '#2ecc71'
+            },
+            {
+              label: 'Interest',
+              data: interestData,
+              backgroundColor: '#e74c3c'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'top'
+            },
+            title: {
+              display: true,
+              text: 'EMI Breakdown (Principal vs Interest)'
+            }
+          }
+        }
+      });
     }
 
     function downloadPDF() {
